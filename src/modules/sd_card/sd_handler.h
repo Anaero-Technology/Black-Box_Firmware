@@ -8,19 +8,22 @@ class SD_Handler {
         bool begin();
         bool read_file(const char* PATH);
         bool set_setup(bool col);
-        void set_name(const char *NAME);
-        bool get_name();
+        bool set_name(const char *NAME);
+        bool read_name();
         void set_time_file(unsigned long time);
         unsigned long get_time_file();
         void set_tip_file();
         void get_memory_data();
         void list_files();
-        bool check_file_name(const char FILE_NAME[33]);
+        bool check_file_name(const char * FILE_NAME);
         void reset_tip_memory_file();
         void write_tip_memory(unsigned long location);
         unsigned long get_tip_memory_location(unsigned long eventNumber);
         void download_file(const char *FILE_NAME);
         bool delete_file(const char* FILE_NAME);
+        char* get_logging_file();
+        char* get_name();
+        void reset_hourly_tips_file();
 
     private:
         const char SETUP_FILE[20] = "/settings/setup.txt";
@@ -29,6 +32,7 @@ class SD_Handler {
         const char TIME_FILE[19] = "/settings/time.txt";
         const char DATA_ROOT[7] = "/data/";
         const char TIP_MEMORY_FILE[26] = "/settings/eventmemory.txt";
+        const char HOURLY_TIP_FILE[25] = "/settings/hourlytips.txt";
         
         bool sd_working = false;
         char device_name[33] = "Unnamed";

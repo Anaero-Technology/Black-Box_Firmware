@@ -61,7 +61,7 @@ bool SD_Handler::begin() {
     }
 
     //If there is a file storing the name of the device
-    if (!get_name()) {
+    if (!read_name()) {
         //Default name
         set_name("Unnamed");
     }
@@ -109,16 +109,18 @@ bool SD_Handler::set_setup(bool col){
     return false;
 }
 
-void SD_Handler::set_name(const char *NAME) {
+bool SD_Handler::set_name(const char *NAME) {
     if (sd_working && strlen(NAME) < 33) {
         data_file = SD.open(NAME_FILE, FILE_WRITE);
         data_file.println(NAME);
         data_file.close();
         strcpy(device_name, NAME);
+        return true;
     }
+    return false;
 }
 
-bool SD_Handler::get_name() {
+bool SD_Handler::read_name() {
     if (sd_working && read_file(NAME_FILE)) {
         if (strlen(file_buffer) < 33) {
             strcpy(device_name, file_buffer);
@@ -194,7 +196,7 @@ void SD_Handler::list_files() {
     Serial.write("done files\n");
 }
 
-bool SD_Handler::check_file_name(const char FILE_NAME[33]) {
+bool SD_Handler::check_file_name(const char * FILE_NAME) {
     /*Set the file name to write data to*/
     char path[38] = "";
     strcpy(path, DATA_ROOT);
@@ -212,11 +214,10 @@ bool SD_Handler::check_file_name(const char FILE_NAME[33]) {
             //Set file - can start
             return true;
         }
-    } else {
-        //Cannot start, the file system is not working
-        Serial.write("failed start nofiles\n");
-        return false;
     }
+    //Cannot start, the file system is not working
+    Serial.write("failed start nofiles\n");
+    return false;
 }
 
 void SD_Handler::reset_tip_memory_file() {
@@ -343,4 +344,22 @@ bool SD_Handler::delete_file(const char* FILE_NAME) {
         return true;
     }
     return false;
+}
+
+char* SD_Handler::get_logging_file() {
+    char file_name[33] = "";
+    for (int ch = 5; ch < 38; ch = ch + 1) {
+        file_name[ch - 5] = logging_file[ch];
+    }
+    file_name[32] = '\0';
+    return file_name;
+}
+
+char* SD_Handler::get_name() {
+    return device_name;
+}
+
+void SD_Handler::reset_hourly_tips_file() {
+    File data_file = SD.open(HOURLY_TIP_FILE, FILE_WRITE);
+    data_file.close();
 }

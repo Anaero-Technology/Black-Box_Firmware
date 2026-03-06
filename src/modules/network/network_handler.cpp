@@ -10,3 +10,7 @@ void Network_Handler::store_mac_address() {
     sprintf(mac_address, "--:--:--:--:--:--");
   }
 }
+
+char* Network_Handler::get_mac_address() {
+    return mac_address;
+}

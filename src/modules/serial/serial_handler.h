@@ -30,6 +30,14 @@ class Serial_Handler {
 
         const int SERIAL_BAUD = 115200;
 
+        char incoming_message[97] = "";
+        char message_part[97] = "";
+        int message_position = 0;
+        const int MESSAGE_MAX = 96;
+        int parameters_present = 0;
+
+        static char message_sections[3][33];
+
         Command test = {"hello", nullptr, 1};
 
         Command command_list[12] = {
@@ -46,4 +54,6 @@ class Serial_Handler {
             {"setName", set_name_request, 0},
             {"getHourly", get_hourly_request, 0}
         };
+
+        const int NUMBER_COMMANDS = 12;
 };

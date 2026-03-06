@@ -19,6 +19,18 @@ void Arduino_Handler::clear_incoming_characters() {
     }
 }
 
+void Arduino_Handler::reset_message() {
+    //collectionBuffer[0] = '\0';
+    //collectionBufferPosition = 0;
+}
+
+void Arduino_Handler::start_reset() {
+    resetting = true;
+    reset_start_time = millis();
+    sent_clear = false;
+    waiting_for_resume = false;
+}
+
 /* OLD CODE BELOW - MUST BE REFORMATTED AND IMPROVED*/
 
 // void readArduinoInput(){
