@@ -111,26 +111,3 @@ void loop() {
 //   File hourlyFile = SD.open(hourlyTipFile, FILE_WRITE);
 //   hourlyFile.close();
 // }
-
-// void sendHourTips(){
-//   Serial.write("tipfile start\n");
-//   if(SD.exists(hourlyTipFile)){
-//     File hourlyFile = SD.open(hourlyTipFile, FILE_READ);
-//     bool newLine = true;
-//     while(hourlyFile.available()){
-//       if(newLine){
-//         Serial.write("tipfile ");
-//         newLine = false;
-//       }
-//       char c = hourlyFile.read();
-//       Serial.write(c);
-//       if(c == '\n'){
-//         newLine = true;
-//       }
-//     }
-//     if(!newLine){
-//       Serial.write('\n');
-//     }
-//   }
-//   Serial.write("tipfile done\n");
-// }
