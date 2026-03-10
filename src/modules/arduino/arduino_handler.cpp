@@ -78,46 +78,11 @@ void Arduino_Handler::start_reset() {
     waiting_for_resume = false;
 }
 
-/* OLD CODE BELOW - MUST BE REFORMATTED AND IMPROVED*/
+void Arduino_Handler::ping_received() {
 
-void arduinoMessageReceived(){
-  //If needing to reset - for the start sequence
-  if (resettingArduino){
-    Serial.write("Testing Reset\n");
-    //If the message just received was a ping and the clear has not yet been sent
-    if (!sentClear && strcmp(currentMessage[1], "PING") == 0){
-      //Send the clear message
-      Serial2.write("SD_CLEAR\n");
-      sentClear = true;
-      Serial.write("Sent clear request\n");
-    }
+}
 
-    if (sentClear){
-      Serial.write("Waiting for clear response...\n");
-    }
-
-    //If the message indicates that the arduino is ready to reset
-    if (strcmp(currentMessage[0], "READY") == 0){
-      //Send the confirmation message
-      Serial2.write("CONFIRM\n");
-      Serial.write("Sent clear confirmation\n");
-    }
-
-    //If the message indicates that the reset is complete
-    if (strcmp(currentMessage[0], "DONE") == 0){
-      //Resetting is done
-      resettingArduino = false;
-      sentClear = false;
-      //Start the experiment
-      collecting = true;
-      hourStarted = millis();
-      Serial.write("done start\n");
-      Serial2.write("LOGGING_ON\n");
-    }
-  }
-  
-  //If it is a data item and not waiting to reset
-  if (!resettingArduino && strcmp(currentMessage[1], "DATA") == 0){ 
+void Arduino_Handler::data_received() {
     //Flags to indicate if anthing was added and if anything has been added since the last part
     bool addedAnything = false;
     bool addedSince = false;
@@ -193,9 +158,17 @@ void arduinoMessageReceived(){
         outputCollectionBuffer(eventTime);
       }
     }
-  }
-  //If this is the message to say that the pause has begin
-  if (strcmp(currentMessage[0], "DATA_PAUSED") == 0){
+}
+
+void Arduino_Handler::ready_received() {
+
+}
+
+void Arduino_Handler::done_received() {
+
+}
+
+void Arduino_Handler::data_paused_received() {
     //If a download has been scheduled
     if (awaitingDownload || awaitingHourly){
       //Get the pause time for both devices
@@ -214,9 +187,9 @@ void arduinoMessageReceived(){
     fileToDownload[0] = '\0';
     //Resume the arduino
     awaitingResume = true;
-  }
-  //If this is a restored data tip
-  if (strcmp(currentMessage[0], "UPDATE") == 0 || strstr(currentMessage[0], "UPDATE") != NULL){
+}
+
+void Arduino_Handler::update_received() {
     //Serial.write("Added restored data\n");
     uint32_t eventTime = espPauseTime + (strtol(currentMessage[2], NULL, 10) - arduinoPauseTime) - experimentStartTime;
     //uint32_t eventTime = strtoul(currentMessage[2], NULL, 10);// - experimentStartTime;
@@ -268,6 +241,44 @@ void arduinoMessageReceived(){
       collectionBuffer[collectionBufferPosition] = '\0';
       //Write the line to the file
       outputCollectionBuffer(eventTime);
+    }
+}
+
+/* OLD CODE BELOW - MUST BE REFORMATTED AND IMPROVED*/
+
+void arduinoMessageReceived(){
+  //If needing to reset - for the start sequence
+  if (resettingArduino){
+    Serial.write("Testing Reset\n");
+    //If the message just received was a ping and the clear has not yet been sent
+    if (!sentClear && strcmp(currentMessage[1], "PING") == 0){
+      //Send the clear message
+      Serial2.write("SD_CLEAR\n");
+      sentClear = true;
+      Serial.write("Sent clear request\n");
+    }
+
+    if (sentClear){
+      Serial.write("Waiting for clear response...\n");
+    }
+
+    //If the message indicates that the arduino is ready to reset
+    if (strcmp(currentMessage[0], "READY") == 0){
+      //Send the confirmation message
+      Serial2.write("CONFIRM\n");
+      Serial.write("Sent clear confirmation\n");
+    }
+
+    //If the message indicates that the reset is complete
+    if (strcmp(currentMessage[0], "DONE") == 0){
+      //Resetting is done
+      resettingArduino = false;
+      sentClear = false;
+      //Start the experiment
+      collecting = true;
+      hourStarted = millis();
+      Serial.write("done start\n");
+      Serial2.write("LOGGING_ON\n");
     }
   }
 

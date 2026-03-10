@@ -16,6 +16,14 @@ class Arduino_Handler {
         void reset_message();
         void start_reset();
     private:
+
+        static void ping_received();
+        static void data_received();
+        static void ready_received();
+        static void done_received();
+        static void data_paused_received();
+        static void update_received();
+
         const int ARDUINO_BAUD = 57600;
         const int ARDUINO_PINS[2] = { 16, 17 };
         bool resetting = false;
@@ -32,12 +40,12 @@ class Arduino_Handler {
         static char message_sections[8][20];
 
         Arduino_Command command_list[12] = {
-            {"PING", 1, nullptr},
-            {"DATA", 1, nullptr},
-            {"READY", 0, nullptr},
-            {"DONE", 0, nullptr},
-            {"DATA_PAUSED", 0, nullptr},
-            {"UPDATE", 0, nullptr}
+            {"PING", 1, ping_received},
+            {"DATA", 1, data_received},
+            {"READY", 0, ready_received},
+            {"DONE", 0, done_received},
+            {"DATA_PAUSED", 0, data_paused_received},
+            {"UPDATE", 0, update_received}
         };
 
         const int NUMBER_COMMANDS = 6;
