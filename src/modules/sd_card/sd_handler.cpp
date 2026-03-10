@@ -196,28 +196,29 @@ void SD_Handler::list_files() {
     Serial.write("done files\n");
 }
 
-bool SD_Handler::check_file_name(const char * FILE_NAME) {
+int SD_Handler::set_logging_file(const char * FILE_NAME) {
     /*Set the file name to write data to*/
     char path[38] = "";
     strcpy(path, DATA_ROOT);
     strcat(path, FILE_NAME);
     if (sd_working){
         if (SD.exists(path)){
-            //Cannot start
-            Serial.write("failed start alreadyexists\n");
-            return false;
+            return 2;
         } else {
             //Create the file
             File newFile = SD.open(path, FILE_WRITE);
             newFile.close();
             strcpy(logging_file, path);
             //Set file - can start
-            return true;
+            return 0;
         }
     }
     //Cannot start, the file system is not working
-    Serial.write("failed start nofiles\n");
-    return false;
+    return 1;
+}
+
+void SD_Handler::reset_logging_file() {
+    logging_file[0] = '\0';
 }
 
 void SD_Handler::reset_tip_memory_file() {
@@ -267,7 +268,7 @@ unsigned long SD_Handler::get_tip_memory_location(unsigned long eventNumber) {
     return 0;
 }
 
-void SD_Handler::download_file(const char *FILE_NAME) {
+void SD_Handler::download_file(const char *FILE_NAME, unsigned long start_position = 0UL) {
     char path[45] = "";
     strcpy(path, DATA_ROOT);
     strcat(path, FILE_NAME);
@@ -277,8 +278,8 @@ void SD_Handler::download_file(const char *FILE_NAME) {
         //Open the file to send
         data_file = SD.open(path, FILE_READ);
         //If it is within the file - seek that end point
-        if (download_start > 0 && download_start < data_file.size()) {
-            data_file.seek(download_start);
+        if (start_position > 0 && start_position < data_file.size()) {
+            data_file.seek(start_position);
         }
         //Get the number of characters in the file
         int char_number = data_file.available();
@@ -362,4 +363,31 @@ char* SD_Handler::get_name() {
 void SD_Handler::reset_hourly_tips_file() {
     File data_file = SD.open(HOURLY_TIP_FILE, FILE_WRITE);
     data_file.close();
+}
+
+void SD_Handler::send_hourly_tips(){
+    if (sd_working) {
+        Serial.write("tipfile start\n");
+        if(SD.exists(HOURLY_TIP_FILE)){
+            File hourlyFile = SD.open(HOURLY_TIP_FILE, FILE_READ);
+            bool newLine = true;
+            while(hourlyFile.available()){
+                if(newLine){
+                    Serial.print("tipfile ");
+                    newLine = false;
+                }
+                char c = hourlyFile.read();
+                Serial.write(c);
+                if(c == '\n'){
+                    newLine = true;
+                }
+            }
+            if(!newLine){
+                Serial.println("");
+            }
+        }
+        Serial.println("tipfile done");
+    } else {
+        Serial.println("getHourly failed nofiles");
+    }
 }

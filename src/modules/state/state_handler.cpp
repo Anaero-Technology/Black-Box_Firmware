@@ -1,4 +1,7 @@
 #include <modules/state/state_handler.h>
+#include <modules/sd_card/sd_handler.h>
+
+extern SD_Handler sd_card;
 
 State_Handler::State_Handler(){};
 
@@ -7,8 +10,16 @@ void State_Handler::reset() {
     logging = false;
 }
 
-void State_Handler::set_logging(bool state) {
+bool State_Handler::set_logging(bool state) {
     logging = state;
+    if (state) {
+        if (strlen(sd_card.get_logging_file()) < 1) {
+            return false;
+        }
+    } else {
+        sd_card.reset_logging_file();
+    }
+    return sd_card.set_setup(state);
 }
 
 bool State_Handler::get_logging() {

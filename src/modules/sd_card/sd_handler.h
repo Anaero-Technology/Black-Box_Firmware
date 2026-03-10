@@ -15,15 +15,17 @@ class SD_Handler {
         void set_tip_file();
         void get_memory_data();
         void list_files();
-        bool check_file_name(const char * FILE_NAME);
+        int set_logging_file(const char * FILE_NAME);
+        void reset_logging_file();
         void reset_tip_memory_file();
         void write_tip_memory(unsigned long location);
         unsigned long get_tip_memory_location(unsigned long eventNumber);
-        void download_file(const char *FILE_NAME);
+        void download_file(const char *FILE_NAME, unsigned long start_position = 0UL);
         bool delete_file(const char* FILE_NAME);
         char* get_logging_file();
         char* get_name();
         void reset_hourly_tips_file();
+        void send_hourly_tips();
 
     private:
         const char SETUP_FILE[20] = "/settings/setup.txt";

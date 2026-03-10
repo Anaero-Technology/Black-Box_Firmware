@@ -138,9 +138,9 @@ void Serial_Handler::start_request() {
     //If not currently running the experiment
     if (!state.get_logging()){
       //handle file name - check character length and validity (28 characters max) and that it doesn't exist yet
-      bool success = sd_card.check_file_name(message_sections[1]);
+      int success = sd_card.set_logging_file(message_sections[1]);
 
-      if (success){
+      if (success == 0){
         bool started = sd_card.set_setup(true);
         if (started){
           rtc.store_time();
@@ -162,8 +162,12 @@ void Serial_Handler::start_request() {
           Serial.println("failed start nofiles");
         }
       } else {
-        //File already is present on sd card
-        Serial.println("failed start alreadyexists");
+        if (success == 1) {
+            //File already is present on sd card
+            Serial.write("failed start nofiles\n");
+        } else {
+            Serial.println("failed start alreadyexists");
+        }
       }
     }else{
       //Message to indicate that the experiment was already running
@@ -172,7 +176,22 @@ void Serial_Handler::start_request() {
 }
 
 void Serial_Handler::stop_request() {
-
+    if (state.get_logging()){
+      bool stopped = state.set_logging(false);
+      if (stopped){
+        //Send signal to indicate that the stop was perfomed successfully
+        Serial.write("done stop\n");
+        Serial2.write("LOGGING_OFF\n");
+      }else{
+        //Message to inicate that it did not stop due to a file system issue
+        Serial.write("failed stop nofiles\n");
+      }
+    }else{
+      //Message to indicate that the experiment was not running already
+      Serial.write("already stop\n");
+    }
+    //Send data about memory usage
+    sd_card.get_memory_data();
 }
 
 void Serial_Handler::files_request() {
@@ -181,15 +200,43 @@ void Serial_Handler::files_request() {
 }
 
 void Serial_Handler::delete_request() {
+    //If not currently running
+    if (!state.get_logging()){
+      //Attempt to delete file
+      if (sd_card.delete_file(message_sections[1])){
+        //Send signal that file was removed successfully
+        Serial.write("done delete\n");
+      }else{
+        //Send signal that the file did not exist
+        Serial.write("failed delete nofile\n");  
+      }
+    }else{
+      //Send signal that the system is currently running
+      Serial.write("already start\n");
+    }
+}
 
+void Serial_Handler::download_file(const char* FILE_NAME, unsigned long file_position) {
+    //If currently logging
+    if (state.get_logging()){
+      //Perform a pause first
+      awaitingDownload = true;
+      Serial2.write("PAUSE_DATA\n");
+    }else{
+      //Start the file download
+      sd_card.download_file(FILE_NAME, file_position);
+    }
 }
 
 void Serial_Handler::download_request() {
-
+    download_file(message_sections[1], 0UL);
 }
 
 void Serial_Handler::download_from_request() {
-
+    //Attempt to convert start position - 0 if failed
+    unsigned long line_location = strtoul(message_sections[2], NULL, 10);
+    unsigned long download_start_point = sd_card.get_tip_memory_location(line_location);
+    download_file(message_sections[1], download_start_point);
 }
 
 void Serial_Handler::get_time_request() {
@@ -220,136 +267,14 @@ void Serial_Handler::set_name_request() {
 }
 
 void Serial_Handler::get_hourly_request() {
-
-}
-
-
-/* OLD CODE BELOW*/
-
-void handleCommandInput(char msgParts[3][33]){
-  /*Handle the command sent from serial and perform the correct action and respond appropriately*/
-  //If this is the command to start recieving data
-
-  //If this is the command to stop receiving data
-    if (strcmp(msgParts[0], "stop") == 0){
-    if (collecting){
-      bool stopped = configureSetup(false);
-      if (stopped){
-        //Flag set to stop collecting arduino data
-        collecting = false;
-        //Reset the file destination
-        fileLocation[0] = '\0';
-        //Send signal to indicate that the stop was perfomed successfully
-        Serial.write("done stop\n");
-        Serial2.write("LOGGING_OFF\n");
-      }else{
-        //Message to inicate that it did not stop due to a file system issue
-        Serial.write("failed stop nofiles\n");
-      }
-    }else{
-      //Message to indicate that the experiment was not running already
-      Serial.write("already stop\n");
-    }
-    //Send data about memory usage
-    getMemoryData();
-  }
-
-  //If this is the command to send the file list
-  else if (strcmp(msgParts[0], "files") == 0){
-    
-  }
-
-  //If this is the command to delete a file
-  else if (strcmp(msgParts[0], "delete") == 0){
-    //If not currently running
-    if (!collecting){
-      //If there is a file with the given name
-      if (SD.exists(msgParts[1])){
-        //Delete the file
-        SD.remove(msgParts[1]);
-        //Send signal that file was removed successfully
-        Serial.write("done delete\n");
-      }else{
-        //Send signal that the file did not exist
-        Serial.write("failed delete nofile\n");  
-      }
-    }else{
-      //Send signal that the system is currently running
-      Serial.write("already start\n");
-    }
-  }
-
-  //If the message requests a file download
-  else if (strcmp(msgParts[0], "download") == 0){
-    bool done = false;
-    //Iterate through characters in the file name
-    for (int ch = 0; ch < 33 && !done; ch = ch + 1){
-      //Add the character to the name of the file to be downloaded
-      fileToDownload[ch] = msgParts[1][ch];
-      //Once the end of the name has been reached
-      if (msgParts[1][ch] == '\0'){
-        done = true;
-      }
-    }
-
-    downloadStartPoint = 0UL;
-
     //If currently receiving data
-    if (collecting){
-      //Perform a pause first
-      awaitingDownload = true;
-      Serial2.write("PAUSE_DATA\n");
-    }else{
-      //Start the file download
-      downloadFile();
-    }
-    
-  }
-
-  else if (strcmp(msgParts[0], "downloadFrom") == 0){
-     bool done = false;
-    //Iterate through characters in the file name
-    for (int ch = 0; ch < 33 && !done; ch = ch + 1){
-      //Add the character to the name of the file to be downloaded
-      fileToDownload[ch] = msgParts[1][ch];
-      //Once the end of the name has been reached
-      if (msgParts[1][ch] == '\0'){
-        done = true;
-      }
-    }
-
-    //Attempt to convert start position - 0 if failed
-    unsigned long lineLocation = strtoul(msgParts[2], NULL, 10);
-    downloadStartPoint = getTipMemoryLocation(lineLocation);
-
-    //If currently receiving data
-    if (collecting){
-      //Perform a pause first
-      awaitingDownload = true;
-      Serial2.write("PAUSE_DATA\n");
-    }else{
-      //Start the file download
-      downloadFile();
-    }
-  }
-  else if (strcmp(msgParts[0], "setName") == 0){
-    
-  }
-
-  else if (strcmp(msgParts[0], "getHourly") == 0){
-    if(filesWorking){
-      //If currently receiving data
-      if (collecting){
+    if (state.get_logging()){
         //Perform a pause first
         awaitingHourly = true;
         Serial2.write("PAUSE_DATA\n");
-      }else{
+    } else {
         //Start the file download
-        sendHourTips();
-      }
-    }else{
-      Serial.write("getHourly failed nofiles\n");
+        sd_card.send_hourly_tips();
     }
-  }
 }
 

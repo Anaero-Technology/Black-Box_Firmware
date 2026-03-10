@@ -27,6 +27,7 @@ class Serial_Handler {
         static void set_time_request();
         static void set_name_request();
         static void get_hourly_request();
+        static void download_file(const char* FILE_NAME, unsigned long file_position);
 
         const int SERIAL_BAUD = 115200;
 
@@ -38,20 +39,18 @@ class Serial_Handler {
 
         static char message_sections[3][33];
 
-        Command test = {"hello", nullptr, 1};
-
         Command command_list[12] = {
             {"info", info_request, 0},
             {"type", type_request, 0},
             {"start", start_request, 1},
             {"stop", stop_request, 0},
             {"files", files_request, 0},
-            {"delete", delete_request, 0},
-            {"download", download_request, 0},
-            {"downloadFrom", download_from_request, 0},
+            {"delete", delete_request, 1},
+            {"download", download_request, 1},
+            {"downloadFrom", download_from_request, 2},
             {"getTime", get_time_request, 0},
-            {"setTime", set_time_request, 0},
-            {"setName", set_name_request, 0},
+            {"setTime", set_time_request, 1},
+            {"setName", set_name_request, 1},
             {"getHourly", get_hourly_request, 0}
         };
 
