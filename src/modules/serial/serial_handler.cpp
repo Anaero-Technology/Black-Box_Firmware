@@ -293,3 +293,19 @@ void Serial_Handler::get_hourly_request() {
     }
 }
 
+void Serial_Handler::configure_wifi_request() {
+    if (network.set_wifi_info(message_sections[1], message_sections[2])) {
+        Serial.println("done configureWifi");
+    } else {
+        Serial.println("failed configureWifi couldnotconnect");
+    }
+}
+
+void Serial_Handler::set_host_request() {
+    if (network.set_host_address(message_sections[1])) {
+        Serial.println("done setHost");
+    } else {
+        Serial.println("failed setHost invalidname");
+    }
+}
+

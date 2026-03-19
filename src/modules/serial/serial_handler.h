@@ -21,6 +21,8 @@ class Serial_Handler {
         void set_time_request();
         void set_name_request();
         void get_hourly_request();
+        void configure_wifi_request();
+        void set_host_request();
 
         void (Serial_Handler::*info_pointer)() = &Serial_Handler::info_request;
         void (Serial_Handler::*type_pointer)() = &Serial_Handler::type_request;
@@ -34,6 +36,8 @@ class Serial_Handler {
         void (Serial_Handler::*set_time_pointer)() = &Serial_Handler::set_time_request;
         void (Serial_Handler::*set_name_pointer)() = &Serial_Handler::set_name_request;
         void (Serial_Handler::*get_hourly_pointer)() = &Serial_Handler::get_hourly_request;
+        void (Serial_Handler::*configure_wifi_pointer)() = &Serial_Handler::configure_wifi_request;
+        void (Serial_Handler::*set_host_pointer)() = &Serial_Handler::set_host_request;
 
         void download_file(const char* FILE_NAME, unsigned long file_position);
 
@@ -53,7 +57,7 @@ class Serial_Handler {
             const int parameters;
         };
 
-        Command command_list[12] = {
+        Command command_list[14] = {
             {"info", info_pointer, 0},
             {"type", type_pointer, 0},
             {"start", start_pointer, 1},
@@ -66,7 +70,9 @@ class Serial_Handler {
             {"setTime", set_time_pointer, 1},
             {"setName", set_name_pointer, 1},
             {"getHourly", get_hourly_pointer, 0},
+            {"configureWifi", configure_wifi_pointer, 2},
+            {"setHost", set_host_pointer, 1}
         };
 
-        const int NUMBER_COMMANDS = 12;
+        const int NUMBER_COMMANDS = 14;
 };
