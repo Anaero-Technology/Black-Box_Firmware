@@ -1,11 +1,9 @@
 #include <modules/arduino/arduino_handler.h>
-#include <modules/state/state_handler.h>
-#include <modules/rtc/rtc_handler.h>
-#include <modules/sd_card/sd_handler.h>
 
 extern State_Handler state;
 extern RTC_Handler rtc;
 extern SD_Handler sd_card;
+extern Network_Handler network;
 
 void Arduino_Handler::begin() {
     Serial2.begin(ARDUINO_BAUD, SERIAL_8N1, ARDUINO_PINS[0], ARDUINO_PINS[1]);
@@ -317,6 +315,9 @@ void Arduino_Handler::output_data(unsigned long event_time) {
         if (sd_card.write_data(output_buffer)) {
             Serial.print("tip ");
             Serial.println(output_buffer);
+            if (network.is_wifi_connected()) {
+                network.send_message(output_buffer);
+            }
             state.increment_event_number();
             sd_card.set_tip_file();
             sd_card.write_tip_memory(file_size);

@@ -1,5 +1,9 @@
 #pragma once
 #include <Arduino.h>
+#include <modules/state/state_handler.h>
+#include <modules/rtc/rtc_handler.h>
+#include <modules/sd_card/sd_handler.h>
+#include <modules/network/network_handler.h>
 
 class Arduino_Handler {
     public:
