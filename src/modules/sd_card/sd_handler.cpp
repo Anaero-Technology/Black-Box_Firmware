@@ -20,6 +20,12 @@ bool SD_Handler::begin() {
     }
 
     sd_working = true;
+    if (!SD.exists(SETTINGS_ROOT)) {
+        SD.mkdir(SETTINGS_ROOT);
+    }
+    if (!SD.exists(DATA_ROOT)) {
+        SD.mkdir(DATA_ROOT);
+    }
 
     if (read_file(SETUP_FILE)) {
         char *token;
@@ -268,7 +274,7 @@ unsigned long SD_Handler::get_tip_memory_location(unsigned long eventNumber) {
     return 0;
 }
 
-void SD_Handler::download_file(const char *FILE_NAME, unsigned long start_position = 0UL) {
+void SD_Handler::download_file(const char *FILE_NAME, unsigned long start_position) {
     char path[45] = "";
     strcpy(path, DATA_ROOT);
     strcat(path, FILE_NAME);
@@ -348,12 +354,13 @@ bool SD_Handler::delete_file(const char* FILE_NAME) {
 }
 
 char* SD_Handler::get_logging_file() {
-    char file_name[33] = "";
-    for (int ch = 5; ch < 38; ch = ch + 1) {
-        file_name[ch - 5] = logging_file[ch];
+    for (int char_index = 0; char_index < 33; char_index = char_index + 1) {
+        output_file_name[char_index] = '\0';
     }
-    file_name[32] = '\0';
-    return file_name;
+    for (int ch = 5; ch < 38; ch = ch + 1) {
+        output_file_name[ch - 5] = logging_file[ch];
+    }
+    return output_file_name;
 }
 
 char* SD_Handler::get_name() {
@@ -362,6 +369,21 @@ char* SD_Handler::get_name() {
 
 void SD_Handler::reset_hourly_tips_file() {
     File data_file = SD.open(HOURLY_TIP_FILE, FILE_WRITE);
+    data_file.close();
+}
+
+void SD_Handler::save_hourly_tips() {
+    if(!SD.exists(HOURLY_TIP_FILE)) {
+        reset_hourly_tips_file();
+    }
+    data_file = SD.open(HOURLY_TIP_FILE, FILE_APPEND);
+    for(int index = 1; index < 16; index = index + 1){
+        data_file.print(state.get_tip_counter(index));
+        if(index != 14){
+            data_file.print(' ');
+        }
+    }
+    data_file.println("");
     data_file.close();
 }
 
@@ -390,4 +412,45 @@ void SD_Handler::send_hourly_tips(){
     } else {
         Serial.println("getHourly failed nofiles");
     }
+}
+
+void SD_Handler::reset_stored_download_file() {
+    stored_download_file[0] = '\0';
+}
+
+void SD_Handler::set_download_file(const char* FILE_NAME, unsigned long position) {
+    strcpy(stored_download_file, FILE_NAME);
+    download_start = position;
+}
+
+void SD_Handler::download_prepared_file() {
+    if (strlen(stored_download_file) > 0) {
+        download_file(stored_download_file, download_start);
+    }
+}
+
+bool SD_Handler::write_data(const char* NEW_DATA) {
+    if (sd_working) {
+        if (strlen(logging_file) > 0) {
+            if (!SD.exists(logging_file)) {
+                data_file = SD.open(logging_file, FILE_WRITE);
+                data_file.close();
+            }
+            data_file = SD.open(logging_file, FILE_APPEND);
+            data_file.print(NEW_DATA);
+            data_file.close();
+            return true;
+        }
+    }
+    return false;
+}
+
+unsigned long SD_Handler::get_logging_file_size() {
+    if (sd_working && SD.exists(logging_file)) {
+        data_file = SD.open(logging_file, FILE_READ);
+        unsigned long size = data_file.size();
+        data_file.close();
+        return size;
+    }
+    return 0UL;
 }
