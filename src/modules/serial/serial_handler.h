@@ -1,11 +1,5 @@
 #pragma once
 
-struct Command {
-    char word[33];
-    void (*function)();
-    int parameters;
-};
-
 class Serial_Handler {
     public:
         void begin();
@@ -15,43 +9,63 @@ class Serial_Handler {
         bool wait_for_next(int timeout);
 
     private:
-        static void info_request();
-        static void type_request();
-        static void start_request();
-        static void stop_request();
-        static void files_request();
-        static void delete_request();
-        static void download_request();
-        static void download_from_request();
-        static void get_time_request();
-        static void set_time_request();
-        static void set_name_request();
-        static void get_hourly_request();
-        static void download_file(const char* FILE_NAME, unsigned long file_position);
+        void info_request();
+        void type_request();
+        void start_request();
+        void stop_request();
+        void files_request();
+        void delete_request();
+        void download_request();
+        void download_from_request();
+        void get_time_request();
+        void set_time_request();
+        void set_name_request();
+        void get_hourly_request();
+
+        void (Serial_Handler::*info_pointer)() = &Serial_Handler::info_request;
+        void (Serial_Handler::*type_pointer)() = &Serial_Handler::type_request;
+        void (Serial_Handler::*start_pointer)() = &Serial_Handler::start_request;
+        void (Serial_Handler::*stop_pointer)() = &Serial_Handler::stop_request;
+        void (Serial_Handler::*files_pointer)() = &Serial_Handler::files_request;
+        void (Serial_Handler::*delete_pointer)() = &Serial_Handler::delete_request;
+        void (Serial_Handler::*download_pointer)() = &Serial_Handler::download_request;
+        void (Serial_Handler::*download_from_pointer)() = &Serial_Handler::download_from_request;
+        void (Serial_Handler::*get_time_pointer)() = &Serial_Handler::get_time_request;
+        void (Serial_Handler::*set_time_pointer)() = &Serial_Handler::set_time_request;
+        void (Serial_Handler::*set_name_pointer)() = &Serial_Handler::set_name_request;
+        void (Serial_Handler::*get_hourly_pointer)() = &Serial_Handler::get_hourly_request;
+
+        void download_file(const char* FILE_NAME, unsigned long file_position);
 
         const int SERIAL_BAUD = 115200;
 
         char incoming_message[97] = "";
-        char message_part[97] = "";
         int message_position = 0;
         const int MESSAGE_MAX = 96;
         int parameters_present = 0;
 
-        static char message_sections[3][33];
+        char message_sections[3][33];
+
+        typedef void (Serial_Handler::*command_callback)();
+        struct Command {
+            const char word[33];
+            command_callback function;
+            const int parameters;
+        };
 
         Command command_list[12] = {
-            {"info", info_request, 0},
-            {"type", type_request, 0},
-            {"start", start_request, 1},
-            {"stop", stop_request, 0},
-            {"files", files_request, 0},
-            {"delete", delete_request, 1},
-            {"download", download_request, 1},
-            {"downloadFrom", download_from_request, 2},
-            {"getTime", get_time_request, 0},
-            {"setTime", set_time_request, 1},
-            {"setName", set_name_request, 1},
-            {"getHourly", get_hourly_request, 0}
+            {"info", info_pointer, 0},
+            {"type", type_pointer, 0},
+            {"start", start_pointer, 1},
+            {"stop", stop_pointer, 0},
+            {"files", files_pointer, 0},
+            {"delete", delete_pointer, 1},
+            {"download", download_pointer, 1},
+            {"downloadFrom", download_from_pointer, 2},
+            {"getTime", get_time_pointer, 0},
+            {"setTime", set_time_pointer, 1},
+            {"setName", set_name_pointer, 1},
+            {"getHourly", get_hourly_pointer, 0},
         };
 
         const int NUMBER_COMMANDS = 12;

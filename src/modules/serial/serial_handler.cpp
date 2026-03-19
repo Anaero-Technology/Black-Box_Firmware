@@ -43,13 +43,30 @@ void Serial_Handler::split_message() {
     message_sections[0][32] = '\0';
     message_sections[1][32] = '\0';
     message_sections[2][32] = '\0';
+
+    char * message_part;
+    message_part = strtok(incoming_message, " ");
+    if (strlen(message_part) > 0) {
+        strncpy(message_sections[0], message_part, 31);
+    } else {
+        message_sections[0][0] = '\0';
+    }
+    //ERROR HERE!
+    message_part = strtok(NULL, " ");
+    if (message_part && strlen(message_part) > 0) {
+        strncpy(message_sections[1], message_part, 31);
+    } else {
+        message_sections[1][0] = '\0';
+    }
+    //TO HERE
+    message_part = strtok(NULL, " ");
+    if (message_part && strlen(message_part) > 0) {
+        strncpy(message_sections[2], message_part, 31);
+    } else {
+        message_sections[2][0] = '\0';
+    }
+
     parameters_present = 0;
-    strcpy(message_part, strtok(incoming_message, " "));
-    strncpy(message_sections[0], message_part, 31);
-    strcpy(message_part, strtok(NULL, " "));
-    strncpy(message_sections[1], message_part, 31);
-    strcpy(message_part, strtok(NULL, " "));
-    strncpy(message_sections[2], message_part, 31);
     if (strlen(message_sections[1]) > 0) {
         parameters_present = 1;
         if (strlen(message_sections[2]) > 0) {
@@ -64,7 +81,7 @@ void Serial_Handler::check_message() {
         if (strcmp(message_sections[0], command_list[index].word) == 0) {
             found = true;
             if (parameters_present >= command_list[index].parameters) {
-                command_list[index].function();
+                (this->*command_list[index].function)();
             }
         }
     }
@@ -147,7 +164,7 @@ void Serial_Handler::start_request() {
           //Reset message input buffer
           arduino.reset_message();
           //Reset counters and file
-          resetTipCounters();
+          state.reset_tip_counters();
           sd_card.reset_hourly_tips_file();
           sd_card.reset_tip_memory_file();
           //Reset the event index and the collection buffer
@@ -219,12 +236,11 @@ void Serial_Handler::delete_request() {
 void Serial_Handler::download_file(const char* FILE_NAME, unsigned long file_position) {
     //If currently logging
     if (state.get_logging()){
-      //Perform a pause first
-      awaitingDownload = true;
-      Serial2.write("PAUSE_DATA\n");
+        sd_card.set_download_file(FILE_NAME, file_position);
+        arduino.request_download();
     }else{
-      //Start the file download
-      sd_card.download_file(FILE_NAME, file_position);
+        //Start the file download
+        sd_card.download_file(FILE_NAME, file_position);
     }
 }
 
@@ -270,8 +286,7 @@ void Serial_Handler::get_hourly_request() {
     //If currently receiving data
     if (state.get_logging()){
         //Perform a pause first
-        awaitingHourly = true;
-        Serial2.write("PAUSE_DATA\n");
+        arduino.request_hourly();
     } else {
         //Start the file download
         sd_card.send_hourly_tips();
