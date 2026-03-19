@@ -73,3 +73,11 @@ bool RTC_Handler::update_hour_time() {
     }
     return false;
 }
+
+bool RTC_Handler::check_elapsed(unsigned long start, unsigned long current, unsigned long duration) {
+    unsigned long elapsed = current - start;
+    if (start > current) {
+        elapsed = current + (ULONG_MAX - start);
+    }
+    return elapsed >= duration;
+}

@@ -14,6 +14,7 @@ class RTC_Handler {
         unsigned long get_experiment_start();
         void store_current_hour_start();
         bool update_hour_time(); 
+        bool check_elapsed(unsigned long start, unsigned long current, unsigned long duration);
 
     private:
         RTC_DS3231 rtc;
