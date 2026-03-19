@@ -1,7 +1,9 @@
 #include <modules/rtc/rtc_handler.h>
 #include <modules/sd_card/sd_handler.h>
+#include <modules/state/state_handler.h>
 
 extern SD_Handler sd_card;
+extern State_Handler state;
 
 RTC_Handler::RTC_Handler(){};
 
@@ -21,16 +23,17 @@ void RTC_Handler::get_unix_time(){
     Serial.println(unix_time);
 }
 
-void RTC_Handler::get_time_stamp(){
+char* RTC_Handler::get_time_stamp(){
     /*Send the timestamp over the serial connection*/
     //Char buffer to hold timestamp
     //Get the current time
     DateTime time_now = rtc.now();
     char delimeter = ' ';
     Serial.print("time ");
-    char time_buffer[22] = "YYYY MM DD hh mm ss";
+    char time_buffer[22] = "YYYY.MM.DD.hh.mm.ss";
     time_now.toString(time_buffer);
-    Serial.println(time_buffer);
+    strcpy(time_stamp_output, time_buffer);
+    return time_stamp_output;
 }
 
 void RTC_Handler::set_time_seconds(unsigned long seconds){
@@ -50,4 +53,23 @@ void RTC_Handler::set_experiment_start(unsigned long new_time) {
 
 unsigned long RTC_Handler::get_experiment_start() {
     return experiment_start;
+}
+
+void RTC_Handler::store_current_hour_start() {
+    hour_start_time = millis();
+}
+
+bool RTC_Handler::update_hour_time() {
+    if(state.get_logging()){
+        unsigned long current_time = millis();
+        unsigned long elapsed = current_time - hour_start_time;
+        if (current_time < hour_start_time){
+            elapsed = (ULONG_MAX - hour_start_time) + current_time;
+        }
+        if (elapsed >= HOUR_LENGTH){
+            hour_start_time = hour_start_time + HOUR_LENGTH;
+            return true;
+        }
+    }
+    return false;
 }
