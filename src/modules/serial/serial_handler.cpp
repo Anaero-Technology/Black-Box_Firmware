@@ -295,9 +295,13 @@ void Serial_Handler::get_hourly_request() {
 
 void Serial_Handler::configure_wifi_request() {
     if (network.set_wifi_info(message_sections[1], message_sections[2])) {
-        Serial.println("done configureWifi");
+        if (network.connect_to_wifi()) {
+            Serial.println("done configureWifi");
+        } else {
+            Serial.println("failed configureWifi couldnotconnect");
+        }
     } else {
-        Serial.println("failed configureWifi couldnotconnect");
+        Serial.println("failed configureWifi invalidcredentials");
     }
 }
 
